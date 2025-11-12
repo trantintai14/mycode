@@ -1,150 +1,222 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fake Hack - Chúc cô 20/11</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>20/11 — Chúc cô Hằng</title>
   <style>
-    /* cơ bản */
-    html,body{
-      height:100%;
-      margin:0;
-      background:#000;
-      color:#0f0;
-      font-family: "Courier New", monospace;
-      overflow:hidden;
+    :root{
+      --bg:#000;
+      --matrix:#7CFC00;
+      --accent:#00ff99;
     }
-    #screen{
-      padding:12px;
-      white-space:pre;
-      font-size:12px;
-      line-height:1.05;
-      height:100%;
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--matrix);font-family:Consolas,Monaco,monospace;overflow:hidden}
+    /* full canvas matrix */
+    #canvas-wrap{position:fixed;inset:0;z-index:0}
+    canvas{width:100%;height:100%;display:block}
+
+    /* running small line strip (repeated phrase) */
+    .ticker {
+      position:fixed;
+      left:0;
+      top:0;
+      width:100%;
+      padding:6px 0;
+      z-index:2;
+      pointer-events:none;
+      display:flex;
+      align-items:center;
+      overflow:hidden;
       box-sizing:border-box;
+      background:linear-gradient(90deg, rgba(0,0,0,0.75), transparent 30%);
+    }
+    .ticker .marquee {
+      display:inline-block;
+      white-space:nowrap;
+      will-change:transform;
+      font-size:14px;
+      line-height:1;
+      padding-left:100%;
+      animation:scroll 6s linear infinite;
+      color:var(--matrix);
+      text-shadow:0 0 6px rgba(124,252,0,0.2);
+    }
+    @keyframes scroll {
+      from { transform: translateX(0%); }
+      to   { transform: translateX(-100%); }
     }
 
-    /* overlay lời chúc (ẩn ban đầu) */
-    .overlay{
+    /* central big message (appears after a delay) */
+    .big-message {
       position:fixed;
       inset:0;
       display:flex;
       align-items:center;
       justify-content:center;
-      flex-direction:column;
+      z-index:3;
+      pointer-events:none;
+      opacity:0;
+      transform:scale(0.85);
+      transition:opacity 0.9s ease-out, transform 0.9s ease-out;
+      text-align:center;
+      padding:20px;
+    }
+    .big-message.show {
+      opacity:1;
+      transform:scale(1);
+    }
+    .big-message h1{
+      margin:0;
+      font-size:clamp(28px, 6vw, 68px);
+      letter-spacing:1px;
+      line-height:1.05;
       color:#fff;
-      background:rgba(0,0,0,0.88);
-      font-size:28px;
-      display:none;
-      z-index:30;
-    }
-    .glow{
-      text-shadow:0 0 12px rgba(0,255,0,0.6);
-      letter-spacing:2px;
-    }
-    button{
-      margin-top:12px;
-      padding:8px 12px;
-      border-radius:6px;
-      border:0;
-      cursor:pointer;
-      background:#0f0;
-      color:#000;
-      font-weight:700;
+      text-transform:uppercase;
+      text-shadow:
+        0 2px 0 rgba(0,0,0,0.6),
+        0 0 18px rgba(0,255,153,0.12),
+        0 0 36px rgba(0,255,153,0.06);
+      background:linear-gradient(90deg,#ffffff,#b8ffd6);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      padding:12px 18px;
+      border-radius:12px;
+      backdrop-filter: blur(4px) saturate(120%);
     }
 
-    /* credit: nhỏ + mờ dần hiện ra + pulse glow */
-    #credit{
-      position:fixed;
-      bottom:8px;
-      right:12px;
-      color:#0f0;
-      font-size:11px;
-      opacity:0;                 /* mờ ban đầu, sẽ hiện dần */
-      font-family:monospace;
-      z-index:40;
-      transition: opacity 1.8s ease;
-      text-shadow: 0 0 4px rgba(0,255,0,0.2);
+    /* small footer credit */
+    #corner{position:fixed;right:8px;bottom:6px;font-size:11px;color:#bdbdbd;z-index:4;opacity:0.9}
+
+    /* optional pulse/glow */
+    .glow {
+      animation:glow 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 8px rgba(0,255,153,0.06); }
+      to   { text-shadow: 0 0 18px rgba(0,255,153,0.22); }
     }
 
-    /* pulse hiệu ứng để dù nhỏ vẫn chú ý */
-    #credit.pulse{
-      animation: pulse 1.6s infinite alternate;
-    }
-    @keyframes pulse{
-      0%{ opacity:0.5; text-shadow:0 0 3px rgba(0,255,0,0.2);}
-      100%{opacity:1; text-shadow:0 0 12px rgba(0,255,0,0.8);}
-    }
-
-    /* responsive: giảm font trên màn bé */
-    @media (max-width:420px){
-      #screen{font-size:11px}
-      .overlay{font-size:20px}
-      #credit{font-size:10px; right:8px; bottom:6px}
+    /* small responsive tweaks */
+    @media (max-width:520px){
+      .ticker .marquee{font-size:12px;animation-duration:7s}
+      .big-message h1{font-size:clamp(20px, 8vw, 42px)}
     }
   </style>
 </head>
 <body>
-  <div id="screen" aria-hidden="true"></div>
-
-  <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
-    <div class="glow">CHÚC CÔ HẰNG 20/11 VUI VẺ !!! 🎉</div>
-    <button onclick="location.reload()">Chạy lại</button>
+  <!-- small running ticker at top -->
+  <div class="ticker" aria-hidden="true">
+    <div class="marquee" id="marquee">
+      <!-- JS will fill repeated phrases here -->
+    </div>
   </div>
 
-  <div id="credit">by trantintai</div>
+  <!-- canvas for matrix-like background -->
+  <div id="canvas-wrap"><canvas id="matrix"></canvas></div>
 
-<script>
-/* fake hack animation + credit fade-in + pulse */
-const screen = document.getElementById('screen');
-const overlay = document.getElementById('overlay');
-const credit = document.getElementById('credit');
+  <!-- big message appears after a delay -->
+  <div class="big-message" id="bigmsg" aria-hidden="true">
+    <h1 id="bigtext">CHÚC CÔ HẰNG LUÔN NHIỆT HUYẾT, SÁNG TẠO VÀ TRUYỀN CẢM HỨNG CHO THẾ HỆ HỌC SINH YÊU TIN HỌC!</h1>
+  </div>
 
-let cols = Math.max(40, Math.floor(window.innerWidth / 8));
-function binaryLine() {
-  let s='';
-  for (let i=0;i<cols;i++) s += Math.random()<0.5? '0':'1';
-  return s;
-}
+  <div id="corner">by trantintai</div>
 
-/* main run: duration ms, delay per tick ms */
-async function run(duration = 7000, delay = 25) {
-  const start = performance.now();
-  while (performance.now() - start < duration) {
-    const lines = 3 + Math.floor(Math.random()*4);
-    for (let i=0;i<lines;i++) {
-      screen.textContent += binaryLine() + '\n';
+  <script>
+    // ---------- MARQUEE: repeated small phrase ----------
+    const phrase = ":20/11 vui vẻ nha cô Hằng    ";
+    const marquee = document.getElementById('marquee');
+    // create several repeats to fill
+    let repeatCount = 30;
+    for(let i=0;i<repeatCount;i++){
+      const span = document.createElement('span');
+      span.textContent = phrase;
+      marquee.appendChild(span);
     }
-    // giữ tối đa ~200 dòng để tránh lag
-    const parts = screen.textContent.split('\n');
-    if (parts.length > 250) screen.textContent = parts.slice(-200).join('\n') + '\n';
-    window.scrollTo(0, document.body.scrollHeight);
-    await new Promise(r => setTimeout(r, delay));
-  }
 
-  // fake logs rồi hiện overlay
-  await new Promise(r => setTimeout(r, 350));
-  screen.textContent += "\nSYSTEM: unauthorized access detected...\n";
-  await new Promise(r => setTimeout(r, 500));
-  screen.textContent += "TRACE: locating endpoints... done\n";
-  await new Promise(r => setTimeout(r, 550));
-  screen.textContent += "DUMP: memory blocks... done\n";
-  await new Promise(r => setTimeout(r, 700));
+    // Add a tiny jitter (flicker) effect
+    let jitter = 0;
+    setInterval(() => {
+      const r = Math.random();
+      if(r < 0.08){
+        marquee.style.opacity = 0.4 + Math.random()*0.6;
+      } else {
+        marquee.style.opacity = 1;
+      }
+      // occasionally reverse direction briefly
+      if(Math.random() < 0.01){
+        marquee.style.animationDirection = 'reverse';
+        setTimeout(()=> marquee.style.animationDirection = 'normal', 250 + Math.random()*600);
+      }
+    }, 120);
 
-  overlay.style.display = 'flex';
+    // ---------- MATRIX CANVAS ----------
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    function resize(){
+      canvas.width = innerWidth * devicePixelRatio;
+      canvas.height = innerHeight * devicePixelRatio;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+    }
+    window.addEventListener('resize', ()=> {
+      // restore scale
+      ctx.setTransform(1,0,0,1,0,0);
+      resize();
+      ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+    }, {passive:true});
+    resize();
 
-  // show credit: mờ dần hiện ra rồi bật pulse nhẹ
-  credit.style.opacity = '1';
-  // delay 600ms rồi bật pulse
-  setTimeout(()=> credit.classList.add('pulse'), 600);
-}
+    const cols = Math.floor(innerWidth / 14);
+    const ypos = Array(cols).fill(0);
 
-/* auto start khi trang mở */
-run(7000, 25);
+    function matrixTick(){
+      // darken background a bit
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillRect(0,0,innerWidth,innerHeight);
 
-/* nhỏ: nếu người dùng bấm/scroll, vẫn đảm bảo overlay hiển đúng */
-window.addEventListener('resize', ()=> {
-  cols = Math.max(40, Math.floor(window.innerWidth / 8));
-});
-</script>
+      ctx.font = '13px monospace';
+      for(let i=0;i<ypos.length;i++){
+        const x = i*14;
+        const text = Math.random()>0.6 ? (Math.random()>0.5 ? '0' : '1') : String.fromCharCode(0x30A0 + Math.random()*96|0);
+        ctx.fillStyle = 'rgba(124,252,0,0.85)';
+        ctx.fillText(text, x, ypos[i]);
+        // bright head
+        if(Math.random() < 0.02){
+          ctx.fillStyle = 'rgba(0,255,153,0.9)';
+          ctx.fillText(text, x, ypos[i]-12);
+        }
+        ypos[i] = (ypos[i] > innerHeight + Math.random()*100) ? 0 : ypos[i] + 14 * (0.5 + Math.random()*0.9);
+      }
+    }
+    let matrixInterval = setInterval(matrixTick, 45);
+
+    // ---------- BIG MESSAGE APPEAR ----------
+    const bigmsg = document.getElementById('bigmsg');
+    // show after 4 seconds, then keep showing; also give it a glow
+    setTimeout(()=> {
+      bigmsg.classList.add('show');
+      document.getElementById('bigtext').classList.add('glow');
+      // optionally slow matrix so big text reads well
+      clearInterval(matrixInterval);
+      matrixInterval = setInterval(matrixTick, 90);
+      // make marquee slower too
+      marquee.style.animationDuration = '12s';
+    }, 4000);
+
+    // make page attempt to go fullscreen for effect (user gesture required on some browsers)
+    function tryFullScreen(){
+      try {
+        const el = document.documentElement;
+        if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      } catch(e){}
+    }
+    // call on first touch/click to maximize effect (some mobile browsers block automatic fullscreen)
+    window.addEventListener('click', tryFullScreen, {once:true,passive:true});
+    window.addEventListener('touchstart', tryFullScreen, {once:true,passive:true});
+
+    // prevent accidental scroll on mobile
+    window.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+  </script>
 </body>
 </html>
