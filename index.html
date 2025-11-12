@@ -8,45 +8,41 @@
     :root{
       --bg:#000;
       --matrix:#7CFC00;
-      --accent:#00ff99;
+      --accent:#00ffcc;
     }
     html,body{height:100%;margin:0;background:var(--bg);color:var(--matrix);font-family:Consolas,Monaco,monospace;overflow:hidden}
-    /* full canvas matrix */
+
+    /* MATRIX CANVAS FULL SCREEN */
     #canvas-wrap{position:fixed;inset:0;z-index:0}
     canvas{width:100%;height:100%;display:block}
 
-    /* running small line strip (repeated phrase) */
-    .ticker {
+    /* SMALL RUNNING PHRASES MULTI-LINES */
+    .ticker-wrap{
       position:fixed;
-      left:0;
-      top:0;
-      width:100%;
-      padding:6px 0;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-around;
       z-index:2;
       pointer-events:none;
-      display:flex;
-      align-items:center;
       overflow:hidden;
-      box-sizing:border-box;
-      background:linear-gradient(90deg, rgba(0,0,0,0.75), transparent 30%);
+      padding:10px 0;
     }
-    .ticker .marquee {
+    .ticker{
       display:inline-block;
       white-space:nowrap;
-      will-change:transform;
       font-size:14px;
-      line-height:1;
-      padding-left:100%;
-      animation:scroll 6s linear infinite;
+      line-height:1.2;
+      animation:scroll 12s linear infinite;
       color:var(--matrix);
-      text-shadow:0 0 6px rgba(124,252,0,0.2);
+      text-shadow:0 0 6px rgba(0,255,204,0.2);
     }
-    @keyframes scroll {
-      from { transform: translateX(0%); }
-      to   { transform: translateX(-100%); }
+    @keyframes scroll{
+      from{transform:translateX(100%)}
+      to{transform:translateX(-100%)}
     }
 
-    /* central big message (appears after a delay) */
+    /* CENTRAL BIG MESSAGE */
     .big-message {
       position:fixed;
       inset:0;
@@ -70,85 +66,64 @@
       font-size:clamp(28px, 6vw, 68px);
       letter-spacing:1px;
       line-height:1.05;
-      color:#fff;
-      text-transform:uppercase;
+      color:var(--accent);
       text-shadow:
-        0 2px 0 rgba(0,0,0,0.6),
-        0 0 18px rgba(0,255,153,0.12),
-        0 0 36px rgba(0,255,153,0.06);
-      background:linear-gradient(90deg,#ffffff,#b8ffd6);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
+        0 2px 4px rgba(0,0,0,0.6),
+        0 0 12px rgba(0,255,204,0.5),
+        0 0 18px rgba(0,255,204,0.3);
+      text-transform:uppercase;
+      text-align:center;
       padding:12px 18px;
       border-radius:12px;
       backdrop-filter: blur(4px) saturate(120%);
     }
 
-    /* small footer credit */
+    /* FOOTER CREDIT */
     #corner{position:fixed;right:8px;bottom:6px;font-size:11px;color:#bdbdbd;z-index:4;opacity:0.9}
 
-    /* optional pulse/glow */
+    /* GLOW EFFECT */
     .glow {
       animation:glow 1.8s ease-in-out infinite alternate;
     }
     @keyframes glow {
-      from { text-shadow: 0 0 8px rgba(0,255,153,0.06); }
-      to   { text-shadow: 0 0 18px rgba(0,255,153,0.22); }
+      from { text-shadow: 0 0 8px rgba(0,255,204,0.06); }
+      to   { text-shadow: 0 0 18px rgba(0,255,204,0.22); }
     }
 
-    /* small responsive tweaks */
+    /* MOBILE */
     @media (max-width:520px){
-      .ticker .marquee{font-size:12px;animation-duration:7s}
-      .big-message h1{font-size:clamp(20px, 8vw, 42px)}
+      .ticker{font-size:12px;animation-duration:15s}
+      .big-message h1{font-size:clamp(20px,8vw,42px)}
     }
   </style>
 </head>
 <body>
-  <!-- small running ticker at top -->
-  <div class="ticker" aria-hidden="true">
-    <div class="marquee" id="marquee">
-      <!-- JS will fill repeated phrases here -->
-    </div>
-  </div>
-
-  <!-- canvas for matrix-like background -->
+  <!-- MATRIX BACKGROUND -->
   <div id="canvas-wrap"><canvas id="matrix"></canvas></div>
 
-  <!-- big message appears after a delay -->
-  <div class="big-message" id="bigmsg" aria-hidden="true">
-    <h1 id="bigtext">CHÚC CÔ HẰNG LUÔN NHIỆT HUYẾT, SÁNG TẠO VÀ TRUYỀN CẢM HỨNG CHO THẾ HỆ HỌC SINH YÊU TIN HỌC!</h1>
+  <!-- SMALL RUNNING PHRASES MULTI-LINES -->
+  <div class="ticker-wrap" id="tickers"></div>
+
+  <!-- BIG MESSAGE -->
+  <div class="big-message" id="bigmsg">
+    <h1 id="bigtext">CHÚC CÔ HẰNG LUÔN NHIỆT HUYẾT, SÁNG TẠO VÀ TRUYỀN CẢM HỨNG CHO THẾ HỆ HỌC SINH YÊU TIN HỌC !</h1>
   </div>
 
   <div id="corner">by trantintai</div>
 
   <script>
-    // ---------- MARQUEE: repeated small phrase ----------
+    // ---------- CREATE MULTI-LINE TICKERS ----------
+    const tickers = document.getElementById('tickers');
     const phrase = ":20/11 vui vẻ nha cô Hằng    ";
-    const marquee = document.getElementById('marquee');
-    // create several repeats to fill
-    let repeatCount = 30;
-    for(let i=0;i<repeatCount;i++){
-      const span = document.createElement('span');
-      span.textContent = phrase;
-      marquee.appendChild(span);
+    const lines = 6; // số hàng chạy
+    for(let i=0;i<lines;i++){
+      const span = document.createElement('div');
+      span.className = 'ticker';
+      span.textContent = phrase.repeat(20);
+      // mỗi dòng có tốc độ khác 1 chút
+      span.style.animationDuration = `${12 + i*2}s`;
+      tickers.appendChild(span);
     }
-
-    // Add a tiny jitter (flicker) effect
-    let jitter = 0;
-    setInterval(() => {
-      const r = Math.random();
-      if(r < 0.08){
-        marquee.style.opacity = 0.4 + Math.random()*0.6;
-      } else {
-        marquee.style.opacity = 1;
-      }
-      // occasionally reverse direction briefly
-      if(Math.random() < 0.01){
-        marquee.style.animationDirection = 'reverse';
-        setTimeout(()=> marquee.style.animationDirection = 'normal', 250 + Math.random()*600);
-      }
-    }, 120);
 
     // ---------- MATRIX CANVAS ----------
     const canvas = document.getElementById('matrix');
@@ -156,67 +131,56 @@
     function resize(){
       canvas.width = innerWidth * devicePixelRatio;
       canvas.height = innerHeight * devicePixelRatio;
-      ctx.scale(devicePixelRatio, devicePixelRatio);
+      ctx.scale(devicePixelRatio,1,devicePixelRatio,1);
     }
-    window.addEventListener('resize', ()=> {
-      // restore scale
-      ctx.setTransform(1,0,0,1,0,0);
-      resize();
-      ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-    }, {passive:true});
+    window.addEventListener('resize', resize, {passive:true});
     resize();
 
     const cols = Math.floor(innerWidth / 14);
     const ypos = Array(cols).fill(0);
 
     function matrixTick(){
-      // darken background a bit
-      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fillStyle='rgba(0,0,0,0.08)';
       ctx.fillRect(0,0,innerWidth,innerHeight);
-
-      ctx.font = '13px monospace';
+      ctx.font='13px monospace';
       for(let i=0;i<ypos.length;i++){
-        const x = i*14;
-        const text = Math.random()>0.6 ? (Math.random()>0.5 ? '0' : '1') : String.fromCharCode(0x30A0 + Math.random()*96|0);
-        ctx.fillStyle = 'rgba(124,252,0,0.85)';
-        ctx.fillText(text, x, ypos[i]);
-        // bright head
-        if(Math.random() < 0.02){
-          ctx.fillStyle = 'rgba(0,255,153,0.9)';
-          ctx.fillText(text, x, ypos[i]-12);
+        const x=i*14;
+        const text=Math.random()>0.6 ? (Math.random()>0.5?'0':'1') : String.fromCharCode(0x30A0 + Math.random()*96|0);
+        ctx.fillStyle='rgba(124,252,0,0.85)';
+        ctx.fillText(text,x,ypos[i]);
+        if(Math.random()<0.02){
+          ctx.fillStyle='rgba(0,255,204,0.9)';
+          ctx.fillText(text,x,ypos[i]-12);
         }
-        ypos[i] = (ypos[i] > innerHeight + Math.random()*100) ? 0 : ypos[i] + 14 * (0.5 + Math.random()*0.9);
+        ypos[i] = (ypos[i] > innerHeight + Math.random()*100) ? 0 : ypos[i]+14*(0.5+Math.random()*0.8);
       }
     }
-    let matrixInterval = setInterval(matrixTick, 45);
+    let matrixInterval = setInterval(matrixTick,45);
 
-    // ---------- BIG MESSAGE APPEAR ----------
+    // ---------- SHOW BIG MESSAGE ----------
     const bigmsg = document.getElementById('bigmsg');
-    // show after 4 seconds, then keep showing; also give it a glow
-    setTimeout(()=> {
+    setTimeout(()=>{
       bigmsg.classList.add('show');
       document.getElementById('bigtext').classList.add('glow');
-      // optionally slow matrix so big text reads well
+      // matrix chậm lại để đọc chữ lớn
       clearInterval(matrixInterval);
-      matrixInterval = setInterval(matrixTick, 90);
-      // make marquee slower too
-      marquee.style.animationDuration = '12s';
-    }, 4000);
+      matrixInterval = setInterval(matrixTick,90);
+      // ticker chậm lại
+      document.querySelectorAll('.ticker').forEach(t=> t.style.animationDuration = '20s');
+    },4000);
 
-    // make page attempt to go fullscreen for effect (user gesture required on some browsers)
+    // FULLSCREEN ON CLICK/TOUCH
     function tryFullScreen(){
-      try {
-        const el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen().catch(()=>{});
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-      } catch(e){}
+      try{
+        const el=document.documentElement;
+        if(el.requestFullscreen) el.requestFullscreen().catch(()=>{});
+        else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      }catch(e){}
     }
-    // call on first touch/click to maximize effect (some mobile browsers block automatic fullscreen)
-    window.addEventListener('click', tryFullScreen, {once:true,passive:true});
-    window.addEventListener('touchstart', tryFullScreen, {once:true,passive:true});
+    window.addEventListener('click',tryFullScreen,{once:true,passive:true});
+    window.addEventListener('touchstart',tryFullScreen,{once:true,passive:true});
 
-    // prevent accidental scroll on mobile
-    window.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+    window.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
   </script>
 </body>
 </html>
