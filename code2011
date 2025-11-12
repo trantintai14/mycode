@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fake Hack - Chúc cô 20/11</title>
+  <style>
+    /* cơ bản */
+    html,body{
+      height:100%;
+      margin:0;
+      background:#000;
+      color:#0f0;
+      font-family: "Courier New", monospace;
+      overflow:hidden;
+    }
+    #screen{
+      padding:12px;
+      white-space:pre;
+      font-size:12px;
+      line-height:1.05;
+      height:100%;
+      box-sizing:border-box;
+    }
+
+    /* overlay lời chúc (ẩn ban đầu) */
+    .overlay{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      color:#fff;
+      background:rgba(0,0,0,0.88);
+      font-size:28px;
+      display:none;
+      z-index:30;
+    }
+    .glow{
+      text-shadow:0 0 12px rgba(0,255,0,0.6);
+      letter-spacing:2px;
+    }
+    button{
+      margin-top:12px;
+      padding:8px 12px;
+      border-radius:6px;
+      border:0;
+      cursor:pointer;
+      background:#0f0;
+      color:#000;
+      font-weight:700;
+    }
+
+    /* credit: nhỏ + mờ dần hiện ra + pulse glow */
+    #credit{
+      position:fixed;
+      bottom:8px;
+      right:12px;
+      color:#0f0;
+      font-size:11px;
+      opacity:0;                 /* mờ ban đầu, sẽ hiện dần */
+      font-family:monospace;
+      z-index:40;
+      transition: opacity 1.8s ease;
+      text-shadow: 0 0 4px rgba(0,255,0,0.2);
+    }
+
+    /* pulse hiệu ứng để dù nhỏ vẫn chú ý */
+    #credit.pulse{
+      animation: pulse 1.6s infinite alternate;
+    }
+    @keyframes pulse{
+      0%{ opacity:0.5; text-shadow:0 0 3px rgba(0,255,0,0.2);}
+      100%{opacity:1; text-shadow:0 0 12px rgba(0,255,0,0.8);}
+    }
+
+    /* responsive: giảm font trên màn bé */
+    @media (max-width:420px){
+      #screen{font-size:11px}
+      .overlay{font-size:20px}
+      #credit{font-size:10px; right:8px; bottom:6px}
+    }
+  </style>
+</head>
+<body>
+  <div id="screen" aria-hidden="true"></div>
+
+  <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
+    <div class="glow">CHÚC CÔ 20/11 VUI VẺ !!! 🎉</div>
+    <button onclick="location.reload()">Chạy lại</button>
+  </div>
+
+  <div id="credit">by trantintai</div>
+
+<script>
+/* fake hack animation + credit fade-in + pulse */
+const screen = document.getElementById('screen');
+const overlay = document.getElementById('overlay');
+const credit = document.getElementById('credit');
+
+let cols = Math.max(40, Math.floor(window.innerWidth / 8));
+function binaryLine() {
+  let s='';
+  for (let i=0;i<cols;i++) s += Math.random()<0.5? '0':'1';
+  return s;
+}
+
+/* main run: duration ms, delay per tick ms */
+async function run(duration = 7000, delay = 25) {
+  const start = performance.now();
+  while (performance.now() - start < duration) {
+    const lines = 3 + Math.floor(Math.random()*4);
+    for (let i=0;i<lines;i++) {
+      screen.textContent += binaryLine() + '\n';
+    }
+    // giữ tối đa ~200 dòng để tránh lag
+    const parts = screen.textContent.split('\n');
+    if (parts.length > 250) screen.textContent = parts.slice(-200).join('\n') + '\n';
+    window.scrollTo(0, document.body.scrollHeight);
+    await new Promise(r => setTimeout(r, delay));
+  }
+
+  // fake logs rồi hiện overlay
+  await new Promise(r => setTimeout(r, 350));
+  screen.textContent += "\nSYSTEM: unauthorized access detected...\n";
+  await new Promise(r => setTimeout(r, 500));
+  screen.textContent += "TRACE: locating endpoints... done\n";
+  await new Promise(r => setTimeout(r, 550));
+  screen.textContent += "DUMP: memory blocks... done\n";
+  await new Promise(r => setTimeout(r, 700));
+
+  overlay.style.display = 'flex';
+
+  // show credit: mờ dần hiện ra rồi bật pulse nhẹ
+  credit.style.opacity = '1';
+  // delay 600ms rồi bật pulse
+  setTimeout(()=> credit.classList.add('pulse'), 600);
+}
+
+/* auto start khi trang mở */
+run(7000, 25);
+
+/* nhỏ: nếu người dùng bấm/scroll, vẫn đảm bảo overlay hiển đúng */
+window.addEventListener('resize', ()=> {
+  cols = Math.max(40, Math.floor(window.innerWidth / 8));
+});
+</script>
+</body>
+</html>
